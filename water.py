@@ -23,12 +23,14 @@ def ndim_grid(start,stop):
 
 def cell_operation(neighbors):
     bottom = neighbors[2][1]
-
-    #Check if the bottom block is not full
+    # If the block isn't water we can stop
+    if neighbors[1][1] <= 0:
+        return neighbors
+    # Check if the bottom block is not full
     if neighbors[2][1] == 0:
         neighbors[2][1] = neighbors[1][1]
         neighbors[1][1] = 0
-    elif neighbors[2][1] > 0 and neighbors[2][1] <= neighbors[1][1] + 2:
+    elif neighbors[2][1] > 0 and neighbors[2][1] < neighbors[1][1] + 2:
         moved_water = (neighbors[1][1] + 2) - neighbors[2][1]
         if moved_water > neighbors[1][1]:
             moved_water = neighbors[1][1]
@@ -51,13 +53,18 @@ def cell_operation(neighbors):
                         neighbors[tuple(neigh)] += diff / 2 + 1
                         neighbors[1][1] -= diff / 2
         # push water upwards if pressure difference is greater than 2
-        if neighbors[0][1] >= 0 and neighbors[0][1] + 2 <= neighbors[1][1]:
-            moved_water = neighbors[1][1] - (neighbors[0][1] + 2)
-            neighbors[1][1] -= moved_water
-            neighbors[0][1] += moved_water
+        if neighbors[0][1] >= 0 and neighbors[0][1] + 2 < neighbors[1][1]:
+            moved_water = (neighbors[1][1] - (neighbors[0][1] + 2)) / 2.0
+            # if the water mass isn't odd it will be 2.5 or something
+            if moved_water != int(moved_water):
+                neighbors[1][1] -= int(moved_water)
+                neighbors[0][1] += int(moved_water) + 1
+            else:
+                neighbors[1][1] -= moved_water
+                neighbors[0][1] += moved_water
     return neighbors
 
-for n in range(60):
+for n in range(20):
     # We want to check every second block and alternate between an
     # offset of 0 and 1. We also ignore the borders.
     # It will look like this (. = Ignored, X = Selected):
@@ -74,8 +81,7 @@ for n in range(60):
     #      ..X.X.X.X.
     #      .X.X.X.X..
     #      ..........
-    if n > 55:
-        print(field)
+    print(field, "\n")
 
     for y, plane in enumerate(field[1:-1], start=1):
         for x in range(((y % 2) ^ (n % 2)) + 1, len(field / 2) - 1, 2): # I'm actually sorry for this code; couldn't be bothered to write it cleaner.
